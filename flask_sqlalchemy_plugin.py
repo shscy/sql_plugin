@@ -19,6 +19,7 @@ except ImportError:
 
 
 class DataBaseSessionProxy(object):
+    """ 代理对象， 实现延迟加载 """
     __slots__ = ('__local', '__name__')
     def __init__(self, local, name=None):
         object.__setattr__(self, '_DataBaseSessionProxy__local', local)
@@ -40,6 +41,9 @@ class DataBaseSessionProxy(object):
 
 
 class SingleInsatance(type):
+    """ 单例, 每个process 只有产生一个process 
+        使用元类
+    """
     def __init__(self, *args, **kwargs):
         self.__instance = None
 
@@ -52,7 +56,9 @@ class SingleInsatance(type):
 
 
 class cached_priporty(property):
-
+    """ 支持线程 和协程 隔离的缓存
+        使用描述器
+    """
     def __init__(self, func, name=None, get_dent=get_ident):
         self.func = func
         self.name = name or func.__name__
@@ -82,8 +88,9 @@ class cached_priporty(property):
 
 class SessionChain(object):
     """
-    对代理对象进行链式调用， 如果最后的值不是可调用的得到的将是一个代理值,
-    为了得到最后的值， 需要调用 get_current_obj
+    对session过期对象执行的特定异常进行扑捉，
+    然后自动进行数据库的重新链接
+    链式调用
     """
     __slots__ = ("__obj", '__index')
 
@@ -152,8 +159,7 @@ class SessionManager(metaclass=SingleInsatance):
             self.session.close()
             del self.session
         except Exception as e:
-            if self.debug is True:
-                print("\nremove session error: ", str(e))
+            pass
 
     @cached_priporty
     def sql_session(self):
@@ -166,8 +172,7 @@ class SessionManager(metaclass=SingleInsatance):
             self.sql_session.close()
             del self.sql_session
         except Exception as e:
-            if self.debug is True:
-                print("\nremove sql_session error: ", str(e))
+            pass
 
     def retry_connect(self):
         import time, logging
@@ -185,6 +190,7 @@ class SessionManager(metaclass=SingleInsatance):
                 break
 
 class View(MethodView):
+    """ 删除session缓存对象 """
     def dispatch_request(self, *args, **kwargs):
         try:
             return super().dispatch_request(*args, **kwargs)
