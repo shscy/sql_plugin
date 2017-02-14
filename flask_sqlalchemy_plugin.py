@@ -193,30 +193,3 @@ class View(MethodView):
             current_session_manager.remove_sql_session()
             raise e
 
-
-if __name__ == '__main__':
-    from app.models import User
-    from app import create_app
-
-    flask_app =  create_app()
-    print("run process\n")
-    from app._globals import current_session_manager
-    result = current_session_manager.session.execute("select * from user").first()
-    print("result", result)
-    import time
-    time.sleep(10)
-
-    try:
-        result = SessionChain(current_session_manager.session).execute("select * from user").first()
-    except Exception:
-        pass
-    else:
-    # print(dir(result),"\n\n", result.keys())
-        print(result)
-    print("start")
-    time.sleep(5)
-    result = SessionChain(current_session_manager.session).execute("select * from user").first()
-    # #print(dir(result),"\n\n", result.keys())
-    print(result)
-
-
